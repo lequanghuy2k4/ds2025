@@ -8,7 +8,7 @@ Students are expected to:
 
 Student Info
 =========================
-* Student Name:Lê Quang Huy-22BI13190
+* Student Name:Lê Quang Huy
 * Student ID: 22BI13190
 * Student Group ID: Not-for-now
 
