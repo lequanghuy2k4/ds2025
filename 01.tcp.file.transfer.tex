@@ -1,0 +1,113 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Define colors for code
+\definecolor{lightgray}{rgb}{0.95,0.95,0.95}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{lightgray},
+    commentstyle=\color{green},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{gray},
+    stringstyle=\color{red},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    numbers=left,
+    numbersep=5pt,
+    columns=fullflexible,
+}
+\lstset{style=mystyle}
+
+\title{File Transfer System Using Sockets}
+\author{Le Quang Huy - 22BI13190}
+\date{November 29, 2024}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+This document outlines the implementation of a file transfer system using Python sockets. The system consists of a server that sends a file to a client upon request.
+
+\section{System Overview}
+The system is composed of two main components:
+\begin{itemize}
+    \item A host that listens for incoming connections and sends a specified file.
+    \item A client that connects to the server and receives the file.
+\end{itemize}
+
+\section{Server Implementation}
+The server is implemented using the following code:
+
+\begin{lstlisting}[language=Python, caption=Host Code]
+import socket
+import os
+
+def handle_client(conn, address):
+    print(f"Connected to {address}.")
+    file_to_send = r'/media/icebear/Linux/DS/task1/transfer_file.txt'
+
+    if os.path.exists(file_to_send):
+        with open(file_to_send, 'rb') as file:
+            print("Starting file transfer...")
+            while (chunk := file.read(1024)):
+                conn.send(chunk)
+            print("File transfer complete.")
+    else:
+        print("File not found.")
+        conn.send(b"File not found!")
+    conn.close()
+
+def host():
+    server_host = '0.0.0.0'
+    server_port = 5000
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket.bind((server_host, server_port))
+    server_socket.listen(1)
+    print(f"Server listening on {server_host}:{server_port}...")
+
+    while True:
+        conn, address = server_socket.accept()
+        handle_client(conn, address)
+
+if __name__ == '__main__':
+    host()
+\end{lstlisting}
+
+\section{Client Implementation}
+The client is implemented as follows:
+
+\begin{lstlisting}[language=Python, caption=Client Code]
+import socket
+
+def receive_file():
+    server_host = '127.0.0.1'  
+    server_port = 5000
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    client_socket.connect((server_host, server_port))
+
+    received_filename = 'received_file.txt'
+    with open(received_filename, 'wb') as file:
+        print("Receiving file...")
+        while True:
+            data = client_socket.recv(1024)
+            if not data:
+                print("File transfer complete.")
+                break
+            file.write(data)
+
+    print(f"File saved as {received_filename}.")
+    client_socket.close()
+
+if __name__ == '__main__':
+    receive_file()
+\end{lstlisting}
+
+\section{Conclusion}
+The code demonstrates a simple file transfer system using Python sockets, how to set up a host and a client for file communication. 
+
+\end{document}
