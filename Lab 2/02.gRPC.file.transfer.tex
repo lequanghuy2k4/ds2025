@@ -1,0 +1,102 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Define colors for code
+\definecolor{lightgray}{rgb}{0.95,0.95,0.95}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{lightgray},
+    commentstyle=\color{green},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{gray},
+    stringstyle=\color{red},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    numbers=left,
+    numbersep=5pt,
+    columns=fullflexible,
+}
+\lstset{style=mystyle}
+
+\title{File Transfer System Using gRPC}
+\author{Le Quang Huy - 22BI13190}
+
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+This document outlines the implementation of a file transfer system using gRPC. The system consists of a server that sends a file to a client upon request.
+
+\section{System Overview}
+The system is composed of two main components:
+\begin{itemize}
+    \item A server that listens for incoming connections and sends a specified file.
+    \item A client that connects to the server and receives the file.
+\end{itemize}
+
+\section{Server Implementation}
+The server is implemented using the following code:
+
+\begin{lstlisting}[language=Python, caption=Server Code]
+import grpc
+import file_transfer_pb2
+import file_transfer_pb2_grpc
+from concurrent import futures
+import os
+
+class FileTransferServicer(file_transfer_pb2_grpc.FileTransferServicer):
+    def SendFile(self, request, context):
+        file_to_send = r'D:\DS\task2\tranfer_file.txt'
+        if os.path.exists(file_to_send):
+            with open(file_to_send, 'rb') as file:
+                return file_transfer_pb2.FileChunk(data=file.read(), filename='transfer_file.txt')
+        else:
+            context.set_details("File not found.")
+            context.set_code(grpc.StatusCode.NOT_FOUND)
+            return file_transfer_pb2.FileChunk()
+
+def serve():
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    file_transfer_pb2_grpc.add_FileTransferServicer_to_server(FileTransferServicer(), server)
+    server.add_insecure_port('[::]:6000')
+    print("Server listening on port 6000...")
+    server.start()
+    server.wait_for_termination()
+
+if __name__ == '__main__':
+    serve()
+\end{lstlisting}
+
+\section{Client Implementation}
+The client is implemented as follows:
+
+\begin{lstlisting}[language=Python, caption=Client Code]
+import grpc
+import file_transfer_pb2
+import file_transfer_pb2_grpc
+
+def receive_file():
+    channel = grpc.insecure_channel('localhost:6000')
+    stub = file_transfer_pb2_grpc.FileTransferStub(channel)
+    response = stub.SendFile(file_transfer_pb2.Empty())
+
+    if response.data:
+        received_filename = 'received_file.txt'
+        with open(received_filename, 'wb') as file:
+            file.write(response.data)
+        print(f"File saved as {received_filename}.")
+    else:
+        print("File not found on the server.")
+
+if __name__ == '__main__':
+    receive_file()
+\end{lstlisting}
+
+\section{Conclusion}
+The code demonstrates a simple file transfer system using gRPC, showing how to set up a server and a client for file communication. 
+
+\end{document}
